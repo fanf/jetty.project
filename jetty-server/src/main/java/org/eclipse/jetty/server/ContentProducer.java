@@ -13,13 +13,17 @@
 
 package org.eclipse.jetty.server;
 
+import java.io.IOException;
+
 import org.eclipse.jetty.util.component.Destroyable;
 import org.eclipse.jetty.util.thread.AutoLock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * ContentProducer is the bridge between {@link HttpInput} and {@link HttpChannel}.
  * It wraps a {@link HttpChannel} and uses the {@link HttpChannel#needContent()},
- * {@link HttpChannel#produceContent()} and {@link HttpChannel#failAllContent(Throwable)}
+ * {@link HttpChannel#produceContent()} and {@link HttpChannel#failAllContent()}
  * methods, tracks the current state of the channel's input by updating the
  * {@link HttpChannelState} and provides the necessary mechanism to unblock
  * the reader thread when using a blocking implementation or to know if the reader thread
@@ -148,5 +152,26 @@ public interface ContentProducer
      * @return true if the thread has to be rescheduled, false otherwise.
      */
     boolean onContentProducible();
-}
 
+    /**
+     * This exception used to report when there is some unconsumed content left at the end of a request's processing.
+     */
+    class UnconsumedContentException extends IOException
+    {
+        private static final Logger LOG = LoggerFactory.getLogger(UnconsumedContentException.class);
+
+        public UnconsumedContentException()
+        {
+            super("Unconsumed content");
+        }
+
+        @Override
+        public Throwable fillInStackTrace()
+        {
+            if (LOG.isDebugEnabled())
+                return super.fillInStackTrace();
+            else
+                return this;
+        }
+    }
+}

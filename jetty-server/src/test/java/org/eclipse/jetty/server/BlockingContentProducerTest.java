@@ -554,7 +554,7 @@ public class BlockingContentProducerTest
         }
 
         @Override
-        public boolean failAllContent(Throwable failure)
+        public boolean failAllContent()
         {
             return false;
         }
@@ -619,7 +619,7 @@ public class BlockingContentProducerTest
         }
 
         @Override
-        public boolean failAllContent(Throwable failure)
+        public boolean failAllContent()
         {
             nextContent = null;
             counter = byteBuffers.length;

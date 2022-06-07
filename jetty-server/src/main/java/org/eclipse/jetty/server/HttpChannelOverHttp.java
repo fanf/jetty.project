@@ -134,14 +134,16 @@ public class HttpChannelOverHttp extends HttpChannel implements HttpParser.Reque
     }
 
     @Override
-    public boolean failAllContent(Throwable failure)
+    public boolean failAllContent()
     {
         if (LOG.isDebugEnabled())
-            LOG.debug("failing all content with {} {}", failure, this);
+            LOG.debug("failing all content {}", this);
+        Throwable failure = null;
         if (_content != null)
         {
             if (_content.isSpecial())
                 return _content.isEof();
+            failure = new ContentProducer.UnconsumedContentException();
             _content.failed(failure);
             _content = _content.isEof() ? EOF : null;
             if (_content == EOF)
@@ -165,6 +167,8 @@ public class HttpChannelOverHttp extends HttpChannel implements HttpParser.Reque
                 return atEof;
             }
             c.skip(c.remaining());
+            if (failure == null)
+                failure = new ContentProducer.UnconsumedContentException();
             c.failed(failure);
             if (c.isEof())
             {

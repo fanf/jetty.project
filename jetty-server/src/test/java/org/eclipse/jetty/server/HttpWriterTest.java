@@ -56,7 +56,7 @@ public class HttpWriterTest
             }
 
             @Override
-            public boolean failAllContent(Throwable failure)
+            public boolean failAllContent()
             {
                 return false;
             }

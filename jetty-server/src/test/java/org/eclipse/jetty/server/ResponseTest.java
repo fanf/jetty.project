@@ -167,7 +167,7 @@ public class ResponseTest
             }
 
             @Override
-            public boolean failAllContent(Throwable failure)
+            public boolean failAllContent()
             {
                 return false;
             }

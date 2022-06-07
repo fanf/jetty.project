@@ -36,6 +36,7 @@ import org.eclipse.jetty.http2.frames.HeadersFrame;
 import org.eclipse.jetty.io.EndPoint;
 import org.eclipse.jetty.io.WriteFlusher;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.ContentProducer;
 import org.eclipse.jetty.server.HttpChannel;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpInput;
@@ -581,12 +582,20 @@ public class HttpChannelOverHTTP2 extends HttpChannel implements Closeable, Writ
     }
 
     @Override
-    public boolean failAllContent(Throwable failure)
+    public boolean failAllContent()
     {
         if (LOG.isDebugEnabled())
-            LOG.debug("failing all content with {} {}", failure, this);
+            LOG.debug("failing all content {}", this);
         IStream stream = getStream();
-        boolean atEof = stream == null || stream.failAllData(failure);
+        boolean atEof = stream == null;
+        Throwable failure = null;
+        if (!atEof)
+        {
+            failure = new ContentProducer.UnconsumedContentException();
+            atEof = stream.failAllData(failure);
+        }
+        if (failure == null)
+            failure = new ContentProducer.UnconsumedContentException();
         atEof |= _contentDemander.failContent(failure);
         if (LOG.isDebugEnabled())
             LOG.debug("failed all content, reached EOF? {}", atEof);

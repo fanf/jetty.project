@@ -32,14 +32,6 @@ class AsyncContentProducer implements ContentProducer
 {
     private static final Logger LOG = LoggerFactory.getLogger(AsyncContentProducer.class);
     private static final HttpInput.ErrorContent RECYCLED_ERROR_CONTENT = new HttpInput.ErrorContent(new IllegalStateException("ContentProducer has been recycled"));
-    private static final Throwable UNCONSUMED_CONTENT_EXCEPTION = new IOException("Unconsumed content")
-    {
-        @Override
-        public Throwable fillInStackTrace()
-        {
-            return this;
-        }
-    };
 
     private final AutoLock _lock = new AutoLock();
     private final HttpChannel _httpChannel;
@@ -187,13 +179,9 @@ class AsyncContentProducer implements ContentProducer
     public boolean consumeAll()
     {
         assertLocked();
-        Throwable x = UNCONSUMED_CONTENT_EXCEPTION;
         if (LOG.isDebugEnabled())
-        {
-            x = new IOException("Unconsumed content");
-            LOG.debug("consumeAll {}", this, x);
-        }
-        failCurrentContent(x);
+            LOG.debug("consumeAll {}", this);
+        failCurrentContent(null);
         // A specific HttpChannel mechanism must be used as the following code
         // does not guarantee that the channel will synchronously deliver all
         // content it already contains:
@@ -205,7 +193,7 @@ class AsyncContentProducer implements ContentProducer
         // as the HttpChannel's produceContent() contract makes no such promise;
         // for instance the H2 implementation calls Stream.demand() that may
         // deliver the content asynchronously. Tests in StreamResetTest cover this.
-        boolean atEof = _httpChannel.failAllContent(x);
+        boolean atEof = _httpChannel.failAllContent();
         if (LOG.isDebugEnabled())
             LOG.debug("failed all content of http channel EOF={} {}", atEof, this);
         return atEof;
@@ -218,8 +206,10 @@ class AsyncContentProducer implements ContentProducer
             if (_transformedContent != _rawContent)
             {
                 if (LOG.isDebugEnabled())
-                    LOG.debug("failing currently held transformed content {} {}", x, this);
+                    LOG.debug("failing currently held transformed content {}", this);
                 _transformedContent.skip(_transformedContent.remaining());
+                if (x == null)
+                    x = new UnconsumedContentException();
                 _transformedContent.failed(x);
             }
             _transformedContent = null;
@@ -228,8 +218,10 @@ class AsyncContentProducer implements ContentProducer
         if (_rawContent != null && !_rawContent.isSpecial())
         {
             if (LOG.isDebugEnabled())
-                LOG.debug("failing currently held raw content {} {}", x, this);
+                LOG.debug("failing currently held raw content {}", this);
             _rawContent.skip(_rawContent.remaining());
+            if (x == null)
+                x = new UnconsumedContentException();
             _rawContent.failed(x);
             _rawContent = null;
         }

@@ -83,7 +83,7 @@ public class SpnegoAuthenticatorTest
             }
 
             @Override
-            public boolean failAllContent(Throwable failure)
+            public boolean failAllContent()
             {
                 return false;
             }
@@ -148,7 +148,7 @@ public class SpnegoAuthenticatorTest
             }
 
             @Override
-            public boolean failAllContent(Throwable failure)
+            public boolean failAllContent()
             {
                 return false;
             }

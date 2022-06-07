@@ -30,6 +30,7 @@ import org.eclipse.jetty.http3.frames.HeadersFrame;
 import org.eclipse.jetty.http3.internal.HTTP3Stream;
 import org.eclipse.jetty.io.EndPoint;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.ContentProducer;
 import org.eclipse.jetty.server.HttpChannel;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpInput;
@@ -397,10 +398,10 @@ public class HttpChannelOverHTTP3 extends HttpChannel
     }
 
     @Override
-    public boolean failAllContent(Throwable failure)
+    public boolean failAllContent()
     {
         if (LOG.isDebugEnabled())
-            LOG.debug("failing all content with {} {}", failure, this);
+            LOG.debug("failing all content {}", this);
         // TODO: must read as much as possible to seek EOF.
         HttpInput.Content result;
         try (AutoLock l = lock.lock())
@@ -412,7 +413,7 @@ public class HttpChannelOverHTTP3 extends HttpChannel
                 return result.isEof();
             content = null;
         }
-        result.failed(failure);
+        result.failed(new ContentProducer.UnconsumedContentException());
         return false;
     }
 

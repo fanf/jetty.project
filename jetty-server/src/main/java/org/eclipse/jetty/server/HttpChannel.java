@@ -163,10 +163,9 @@ public abstract class HttpChannel implements Runnable, HttpOutput.Interceptor
 
     /**
      * Fail all content that is currently stored within the channel.
-     * @param failure the failure to fail the content with.
      * @return true if EOF was reached while failing all content, false otherwise.
      */
-    public abstract boolean failAllContent(Throwable failure);
+    public abstract boolean failAllContent();
 
     /**
      * Fail the channel's input.

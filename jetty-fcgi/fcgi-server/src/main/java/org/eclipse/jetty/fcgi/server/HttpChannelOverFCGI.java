@@ -27,6 +27,7 @@ import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.http.MetaData;
 import org.eclipse.jetty.io.EndPoint;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.ContentProducer;
 import org.eclipse.jetty.server.HttpChannel;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpInput;
@@ -140,13 +141,17 @@ public class HttpChannelOverFCGI extends HttpChannel
     }
 
     @Override
-    public boolean failAllContent(Throwable failure)
+    public boolean failAllContent()
     {
         if (LOG.isDebugEnabled())
             LOG.debug("failing all content {}", this);
         HttpInput.Content normal = normalContent;
+        Throwable failure = null;
         if (normal != null)
+        {
+            failure = new ContentProducer.UnconsumedContentException();
             normal.failed(failure);
+        }
         HttpInput.Content special = specialContent;
         if (special != null)
             return special.isEof();
@@ -155,10 +160,12 @@ public class HttpChannelOverFCGI extends HttpChannel
             HttpInput.Content content = produceContent();
             if (content == null)
                 return false;
+            if (failure == null)
+                failure = new ContentProducer.UnconsumedContentException();
+            content.failed(failure);
             special = specialContent;
             if (special != null)
                 return special.isEof();
-            content.failed(failure);
         }
     }
 
