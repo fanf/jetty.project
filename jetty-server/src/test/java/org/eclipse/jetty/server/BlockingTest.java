@@ -98,8 +98,9 @@ public class BlockingTest
                         if (b == '1')
                         {
                             started.countDown();
-                            if (baseRequest.getHttpInput().read() > Integer.MIN_VALUE)
-                                throw new IllegalStateException();
+                            if (baseRequest.getHttpInput().read() == -1)
+                                throw new IOException("read EOF");
+                            throw new IllegalStateException();
                         }
                     }
                     catch (Throwable t)
@@ -272,8 +273,9 @@ public class BlockingTest
                             started.countDown();
                             completed.await(10, TimeUnit.SECONDS);
                             Thread.sleep(500);
-                            if (baseRequest.getHttpInput().read() > Integer.MIN_VALUE)
-                                throw new IllegalStateException();
+                            if (baseRequest.getHttpInput().read() == -1)
+                                throw new IOException("read EOF");
+                            throw new IllegalStateException();
                         }
                     }
                     catch (Throwable t)
@@ -360,8 +362,9 @@ public class BlockingTest
                                 started.countDown();
                                 completed.await(10, TimeUnit.SECONDS);
                                 Thread.sleep(500);
-                                if (baseRequest.getHttpInput().read() > Integer.MIN_VALUE)
-                                    throw new IllegalStateException();
+                                if (baseRequest.getHttpInput().read() == -1)
+                                    throw new IOException("read EOF");
+                                throw new IllegalStateException();
                             }
                         }
                         catch (Throwable t)
@@ -439,8 +442,9 @@ public class BlockingTest
                             if (b == '1')
                             {
                                 started.countDown();
-                                if (baseRequest.getHttpInput().read() > Integer.MIN_VALUE)
-                                    throw new IllegalStateException();
+                                if (baseRequest.getHttpInput().read() == -1)
+                                    throw new IOException("read EOF");
+                                throw new IllegalStateException();
                             }
                         }
                         catch (Throwable t)
