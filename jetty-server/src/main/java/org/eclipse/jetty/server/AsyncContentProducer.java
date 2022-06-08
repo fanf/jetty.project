@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 class AsyncContentProducer implements ContentProducer
 {
     private static final Logger LOG = LoggerFactory.getLogger(AsyncContentProducer.class);
-    private static final HttpInput.ErrorContent SENTINEL_ERROR_CONTENT = new HttpInput.ErrorContent(null);
+    private static final HttpInput.Content EOF = new HttpInput.EofContent();
 
     private final AutoLock _lock = new AutoLock();
     private final HttpChannel _httpChannel;
@@ -61,14 +61,14 @@ class AsyncContentProducer implements ContentProducer
             LOG.debug("recycling {}", this);
 
         // Make sure that the content has been fully consumed before destroying the interceptor and also make sure
-        // that asking this instance for content between recycle and reopen will only produce error'ed content.
+        // that asking this instance for content between recycle and reopen will only produce EOF content.
         if (_rawContent == null)
-            _rawContent = SENTINEL_ERROR_CONTENT;
+            _rawContent = EOF;
         else if (!_rawContent.isSpecial())
             throw new IllegalStateException("ContentProducer with unconsumed content cannot be recycled");
 
         if (_transformedContent == null)
-            _transformedContent = SENTINEL_ERROR_CONTENT;
+            _transformedContent = EOF;
         else if (!_transformedContent.isSpecial())
             throw new IllegalStateException("ContentProducer with unconsumed content cannot be recycled");
 
@@ -230,7 +230,7 @@ class AsyncContentProducer implements ContentProducer
         if (x != null)
             finalContent = new HttpInput.ErrorContent(x);
         else
-            finalContent = SENTINEL_ERROR_CONTENT;
+            finalContent = null;
         _transformedContent = finalContent;
         _rawContent = finalContent;
     }
@@ -324,7 +324,7 @@ class AsyncContentProducer implements ContentProducer
             {
                 if (_transformedContent.isSpecial() || !_transformedContent.isEmpty())
                 {
-                    if (_transformedContent instanceof HttpInput.ErrorContent && !_error)
+                    if (_transformedContent.getError() != null && !_error)
                     {
                         // In case the _rawContent was set by consumeAll(), check the httpChannel
                         // to see if it has a more precise error. Otherwise, the exact same
@@ -333,7 +333,7 @@ class AsyncContentProducer implements ContentProducer
                         HttpInput.Content refreshedRawContent = produceRawContent();
                         if (refreshedRawContent != null)
                             _rawContent = _transformedContent = refreshedRawContent;
-                        _error = _rawContent instanceof HttpInput.ErrorContent;
+                        _error = _rawContent.getError() != null;
                         if (LOG.isDebugEnabled())
                             LOG.debug("refreshed raw content: {} {}", _rawContent, this);
                     }

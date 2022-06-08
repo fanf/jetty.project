@@ -297,11 +297,10 @@ public class HttpInput extends ServletInputStream implements Runnable
                 return read;
             }
 
-            boolean isError = content instanceof ErrorContent;
             Throwable error = content.getError();
             if (LOG.isDebugEnabled())
-                LOG.debug("read isError={} error={} {}", isError, error, this);
-            if (isError)
+                LOG.debug("read error={} {}", error, this);
+            if (error != null)
             {
                 if (error instanceof IOException)
                     throw (IOException)error;
