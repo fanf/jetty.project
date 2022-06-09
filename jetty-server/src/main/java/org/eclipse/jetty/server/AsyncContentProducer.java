@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 class AsyncContentProducer implements ContentProducer
 {
     private static final Logger LOG = LoggerFactory.getLogger(AsyncContentProducer.class);
-    private static final HttpInput.Content EOF = new HttpInput.EofContent();
+    private static final HttpInput.ErrorContent SENTINEL_ERROR_CONTENT = new HttpInput.ErrorContent(new UnconsumedContentException());
 
     private final AutoLock _lock = new AutoLock();
     private final HttpChannel _httpChannel;
@@ -63,12 +63,12 @@ class AsyncContentProducer implements ContentProducer
         // Make sure that the content has been fully consumed before destroying the interceptor and also make sure
         // that asking this instance for content between recycle and reopen will only produce EOF content.
         if (_rawContent == null)
-            _rawContent = EOF;
+            _rawContent = SENTINEL_ERROR_CONTENT;
         else if (!_rawContent.isSpecial())
             throw new IllegalStateException("ContentProducer with unconsumed content cannot be recycled");
 
         if (_transformedContent == null)
-            _transformedContent = EOF;
+            _transformedContent = SENTINEL_ERROR_CONTENT;
         else if (!_transformedContent.isSpecial())
             throw new IllegalStateException("ContentProducer with unconsumed content cannot be recycled");
 
@@ -226,13 +226,9 @@ class AsyncContentProducer implements ContentProducer
             _rawContent = null;
         }
 
-        HttpInput.Content finalContent;
-        if (x != null)
-            finalContent = new HttpInput.ErrorContent(x);
-        else
-            finalContent = null;
-        _transformedContent = finalContent;
-        _rawContent = finalContent;
+        HttpInput.ErrorContent errorContent = x == null ? SENTINEL_ERROR_CONTENT : new HttpInput.ErrorContent(x);
+        _transformedContent = errorContent;
+        _rawContent = errorContent;
     }
 
     @Override

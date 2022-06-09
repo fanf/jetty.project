@@ -13,8 +13,6 @@
 
 package org.eclipse.jetty.server;
 
-import java.io.IOException;
-
 import org.eclipse.jetty.util.component.Destroyable;
 import org.eclipse.jetty.util.thread.AutoLock;
 import org.slf4j.Logger;
@@ -155,23 +153,15 @@ public interface ContentProducer
 
     /**
      * This exception used to report when there is some unconsumed content left at the end of a request's processing.
+     * Suppressed exceptions are disabled, meaning calling {@link #addSuppressed(Throwable)} has no effect.
      */
-    class UnconsumedContentException extends IOException
+    class UnconsumedContentException extends Exception
     {
         private static final Logger LOG = LoggerFactory.getLogger(UnconsumedContentException.class);
 
         public UnconsumedContentException()
         {
-            super("Unconsumed content");
-        }
-
-        @Override
-        public Throwable fillInStackTrace()
-        {
-            if (LOG.isDebugEnabled())
-                return super.fillInStackTrace();
-            else
-                return this;
+            super("Unconsumed content", null, false, LOG.isDebugEnabled());
         }
     }
 }
